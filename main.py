@@ -1,6 +1,7 @@
 import pygame
 import random
 from pygame.locals import (
+    RLEACCEL,
     K_UP,
     K_DOWN,
     K_LEFT,
@@ -41,9 +42,9 @@ class Player(pygame.sprite.Sprite):
             self.rect.bottom = SCREEN_HEIGHT
 
 
-class Enemy(pygame.sprite.Sprite):
+class Particle(pygame.sprite.Sprite):
     def __init__(self):
-        super(Enemy, self).__init__()
+        super(Particle, self).__init__()
         self.surf = pygame.Surface((15, 15))
         self.surf.fill((100, 100, 100))
         self.rect = self.surf.get_rect(
@@ -65,9 +66,12 @@ pygame.init()
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
+ADDENEMY = pygame.USEREVENT + 1
+pygame.time.set_timer(ADDENEMY, 250)
+
 player = Player()
 
-enemies = pygame.sprite.Group()
+particles = pygame.sprite.Group()
 all_sprites = pygame.sprite.Group()
 all_sprites.add(player)
 
@@ -81,6 +85,10 @@ while running:
                 running = False
         elif event.type == QUIT:
             running = False
+        elif event.type == ADDENEMY:
+            new_particle = Particle()
+            particles.add(new_particle)
+            all_sprites.add(new_particle)
 
     screen.fill((255, 255, 255))
 
@@ -88,7 +96,13 @@ while running:
 
     for entity in all_sprites:
         screen.blit(entity.surf, entity.rect)
-        entity.update(pressed_keys)
+
+    # if pygame.sprite.spritecollideany(player, particles):
+    #     player.kill()
+    #     running = False
+
+    particles.update()
+    player.update(pressed_keys)
 
     pygame.display.flip()
 
