@@ -62,34 +62,58 @@ class Particle(pygame.sprite.Sprite):
             self.kill()
 
 
+class Coin(pygame.sprite.Sprite):
+    def __init__(self):
+        super(Coin, self).__init__()
+        self.surf = pygame.image.load(
+            "./assets/misc_coin_sprite.png").convert()
+        self.surf.set_colorkey((0, 0, 0), RLEACCEL)
+        self.rect = self.surf.get_rect(
+            center=(
+                random.randint(0, SCREEN_WIDTH),
+                random.randint(0, SCREEN_HEIGHT),
+            )
+        )
+
+    def update(self):
+        self.rect.move_ip(0, 0)
+
+
 pygame.init()
 
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
-ADDENEMY = pygame.USEREVENT + 1
-pygame.time.set_timer(ADDENEMY, 250)
+ADDPARTICLE = pygame.USEREVENT + 1
+pygame.time.set_timer(ADDPARTICLE, 250)
+ADDCOIN = pygame.USEREVENT + 1
+pygame.time.set_timer(ADDCOIN, 1500)
 
 player = Player()
+coins = 0
 
 particles = pygame.sprite.Group()
+coins = pygame.sprite.Group()
 all_sprites = pygame.sprite.Group()
 all_sprites.add(player)
 
 running = True
 
 while running:
-
     for event in pygame.event.get():
         if event.type == KEYDOWN:
             if event.key == K_ESCAPE:
                 running = False
         elif event.type == QUIT:
             running = False
-        elif event.type == ADDENEMY:
+        if event.type == ADDPARTICLE:
             new_particle = Particle()
             particles.add(new_particle)
             all_sprites.add(new_particle)
+        if event.type == ADDCOIN:
+            new_coin = Coin()
+            coins.add(new_coin)
+            all_sprites.add(new_coin)
 
     screen.fill((30, 30, 30))
 
@@ -98,11 +122,11 @@ while running:
     for entity in all_sprites:
         screen.blit(entity.surf, entity.rect)
 
-    # if pygame.sprite.spritecollideany(player, particles):
-    #     player.kill()
-    #     running = False
+    if pygame.sprite.spritecollideany(player, coins):
+        coins = coins + 1
 
     particles.update()
+    coins.update()
     player.update(pressed_keys)
 
     pygame.display.flip()
