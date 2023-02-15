@@ -14,6 +14,7 @@ from pygame.locals import (
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
 COIN_YELLOW_COLOR = (255, 255, 224)
+FPS = 60
 
 
 class Player(pygame.sprite.Sprite):
@@ -26,13 +27,13 @@ class Player(pygame.sprite.Sprite):
 
     def update(self, pressed_keys):
         if pressed_keys[K_UP]:
-            self.rect.move_ip(0, -1)
+            self.rect.move_ip(0, -10)
         if pressed_keys[K_DOWN]:
-            self.rect.move_ip(0, 1)
+            self.rect.move_ip(0, 10)
         if pressed_keys[K_LEFT]:
-            self.rect.move_ip(-1, 0)
+            self.rect.move_ip(-10, 0)
         if pressed_keys[K_RIGHT]:
-            self.rect.move_ip(1, 0)
+            self.rect.move_ip(10, 0)
 
         if self.rect.left < 0:
             self.rect.left = 0
@@ -55,7 +56,7 @@ class Particle(pygame.sprite.Sprite):
                 random.randint(0, SCREEN_HEIGHT),
             )
         )
-        self.speed = random.randint(1, 5)
+        self.speed = random.randint(10, 20)
 
     def update(self):
         self.rect.move_ip(-self.speed, 0)
@@ -90,22 +91,28 @@ class Enemy(pygame.sprite.Sprite):
         self.surf.set_colorkey((0, 0, 0), RLEACCEL)
         self.rect = self.surf.get_rect(
             center=(
-                random.randint(SCREEN_WIDTH + 20, SCREEN_WIDTH + 100),
+                -100,
                 random.randint(0, SCREEN_HEIGHT),
             )
         )
-        self.speed = random.randint(1, 2)
+        self.speed = random.randint(5, 10)
+        self.move_direction = 0
 
     def update(self):
-        self.rect.move_ip(-self.speed, 0)
-        if (self.rect.left < 0):
+        if (player.rect[1] > self.rect[1]):
+            self.move_direction = 1
+        else:
+            self.move_direction = -1
+
+        self.rect.move_ip(self.speed, self.move_direction)
+        if (self.rect.left > SCREEN_WIDTH):
             self.kill()
 
 
 pygame.init()
 
-
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+clock = pygame.time.Clock()
 
 ADDPARTICLE = pygame.USEREVENT + 1
 pygame.time.set_timer(ADDPARTICLE, 250)
@@ -115,7 +122,6 @@ ADDENEMY = pygame.USEREVENT + 3
 pygame.time.set_timer(ADDENEMY, 750)
 
 player = Player()
-coinsList = []
 
 font = pygame.font.Font('freesansbold.ttf', 16)
 score = 0
@@ -132,6 +138,8 @@ all_sprites.add(player)
 
 running = True
 while running:
+    clock.tick(FPS)
+
     for event in pygame.event.get():
         if event.type == KEYDOWN:
             if event.key == K_ESCAPE:
