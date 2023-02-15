@@ -18,7 +18,7 @@ COIN_YELLOW_COLOR = (255, 255, 224)
 
 class Player(pygame.sprite.Sprite):
     def __init__(self):
-        super(Player, self).__init__()
+        super().__init__()
         self.surf = pygame.image.load(
             "./assets/player_dragon_sprite.png").convert()
         self.surf.set_colorkey((0, 0, 0), RLEACCEL)
@@ -46,7 +46,7 @@ class Player(pygame.sprite.Sprite):
 
 class Particle(pygame.sprite.Sprite):
     def __init__(self):
-        super(Particle, self).__init__()
+        super().__init__()
         self.surf = pygame.Surface((5, 5))
         self.surf.fill((100, 100, 100))
         self.rect = self.surf.get_rect(
@@ -65,7 +65,7 @@ class Particle(pygame.sprite.Sprite):
 
 class Coin(pygame.sprite.Sprite):
     def __init__(self):
-        super(Coin, self).__init__()
+        super().__init__()
         self.surf = pygame.image.load(
             "./assets/misc_coin_sprite.png").convert()
         self.surf.set_colorkey((0, 0, 0), RLEACCEL)
@@ -83,6 +83,25 @@ class Coin(pygame.sprite.Sprite):
         self.kill()
 
 
+class Enemy(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.surf = pygame.image.load("./assets/pngegg (1).png")
+        self.surf.set_colorkey((0, 0, 0), RLEACCEL)
+        self.rect = self.surf.get_rect(
+            center=(
+                random.randint(SCREEN_WIDTH + 20, SCREEN_WIDTH + 100),
+                random.randint(0, SCREEN_HEIGHT),
+            )
+        )
+        self.speed = random.randint(1, 2)
+
+    def update(self):
+        self.rect.move_ip(-self.speed, 0)
+        if (self.rect.left < 0):
+            self.kill()
+
+
 pygame.init()
 
 
@@ -92,6 +111,8 @@ ADDPARTICLE = pygame.USEREVENT + 1
 pygame.time.set_timer(ADDPARTICLE, 250)
 ADDCOIN = pygame.USEREVENT + 2
 pygame.time.set_timer(ADDCOIN, 1500)
+ADDENEMY = pygame.USEREVENT + 3
+pygame.time.set_timer(ADDENEMY, 750)
 
 player = Player()
 coinsList = []
@@ -104,11 +125,12 @@ textRect.center = (50, 40)
 
 particles = pygame.sprite.Group()
 coins = pygame.sprite.Group()
+enemies = pygame.sprite.Group()
 all_sprites = pygame.sprite.Group()
+
 all_sprites.add(player)
 
 running = True
-
 while running:
     for event in pygame.event.get():
         if event.type == KEYDOWN:
@@ -124,6 +146,10 @@ while running:
             new_coin = Coin()
             coins.add(new_coin)
             all_sprites.add(new_coin)
+        if event.type == ADDENEMY:
+            new_enemy = Enemy()
+            enemies.add(new_enemy)
+            all_sprites.add(new_enemy)
 
     screen.fill((30, 30, 30))
 
@@ -137,12 +163,17 @@ while running:
             textRect = text.get_rect()
             textRect.center = (50, 40)
 
+    if pygame.sprite.spritecollideany(player, enemies):
+        player.kill()
+        running = False
+
     for entity in all_sprites:
         screen.blit(entity.surf, entity.rect)
 
     screen.blit(text, textRect)
 
     particles.update()
+    enemies.update()
     player.update(pressed_keys)
 
     pygame.display.flip()
