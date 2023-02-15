@@ -28,12 +28,16 @@ class Player(pygame.sprite.Sprite):
     def update(self, pressed_keys):
         if pressed_keys[K_UP]:
             self.rect.move_ip(0, -10)
+            player_move_sound.play()
         if pressed_keys[K_DOWN]:
             self.rect.move_ip(0, 10)
+            player_move_sound.play()
         if pressed_keys[K_LEFT]:
             self.rect.move_ip(-10, 0)
+            player_move_sound.play()
         if pressed_keys[K_RIGHT]:
             self.rect.move_ip(10, 0)
+            player_move_sound.play()
 
         if self.rect.left < 0:
             self.rect.left = 0
@@ -87,7 +91,7 @@ class Coin(pygame.sprite.Sprite):
 class Enemy(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        self.surf = pygame.image.load("./assets/pngegg (1).png")
+        self.surf = pygame.image.load("./assets/enemy_ghost_sprite.png")
         self.surf.set_colorkey((0, 0, 0), RLEACCEL)
         self.rect = self.surf.get_rect(
             center=(
@@ -109,10 +113,20 @@ class Enemy(pygame.sprite.Sprite):
             self.kill()
 
 
+pygame.mixer.init()
 pygame.init()
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 clock = pygame.time.Clock()
+pygame.mixer.music.load("./assets/misc_music_main.wav")
+pygame.mixer.music.play(loops=-1)
+
+player_move_sound = pygame.mixer.Sound("./assets/player_move_sound.mp3")
+player_move_sound.set_volume(0.1)
+coin_pickup_sound = pygame.mixer.Sound("./assets/misc_coin_pickup_sound.wav")
+coin_pickup_sound.set_volume(1)
+player_crush_sound = pygame.mixer.Sound("./assets/misc_player_crush_sound.ogg")
+player_crush_sound.set_volume(0.3)
 
 ADDPARTICLE = pygame.USEREVENT + 1
 pygame.time.set_timer(ADDPARTICLE, 250)
@@ -137,6 +151,7 @@ all_sprites = pygame.sprite.Group()
 all_sprites.add(player)
 
 running = True
+
 while running:
     clock.tick(FPS)
 
@@ -166,14 +181,16 @@ while running:
     for coin in coins:
         if player.rect.colliderect(coin.rect):
             coin.destruct()
+            coin_pickup_sound.play()
             score += 1
             text = font.render('Coins: ' + str(score), True, COIN_YELLOW_COLOR)
             textRect = text.get_rect()
             textRect.center = (50, 40)
 
     if pygame.sprite.spritecollideany(player, enemies):
+        player_crush_sound.play()
         player.kill()
-        running = False
+        pygame.time.set_timer(QUIT, 1500)
 
     for entity in all_sprites:
         screen.blit(entity.surf, entity.rect)
@@ -186,4 +203,6 @@ while running:
 
     pygame.display.flip()
 
+pygame.mixer.music.stop()
+pygame.mixer.quit()
 pygame.quit()
