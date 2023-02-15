@@ -13,6 +13,7 @@ from pygame.locals import (
 
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
+COIN_YELLOW_COLOR = (255, 255, 224)
 
 
 class Player(pygame.sprite.Sprite):
@@ -78,6 +79,9 @@ class Coin(pygame.sprite.Sprite):
     def update(self):
         self.rect.move_ip(0, 0)
 
+    def destruct(self):
+        self.kill()
+
 
 pygame.init()
 
@@ -86,11 +90,17 @@ screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
 ADDPARTICLE = pygame.USEREVENT + 1
 pygame.time.set_timer(ADDPARTICLE, 250)
-ADDCOIN = pygame.USEREVENT + 1
+ADDCOIN = pygame.USEREVENT + 2
 pygame.time.set_timer(ADDCOIN, 1500)
 
 player = Player()
-coins = 0
+coinsList = []
+
+font = pygame.font.Font('freesansbold.ttf', 16)
+score = 0
+text = font.render('Coins: ' + str(score), True, COIN_YELLOW_COLOR)
+textRect = text.get_rect()
+textRect.center = (50, 40)
 
 particles = pygame.sprite.Group()
 coins = pygame.sprite.Group()
@@ -119,14 +129,20 @@ while running:
 
     pressed_keys = pygame.key.get_pressed()
 
+    for coin in coins:
+        if player.rect.colliderect(coin.rect):
+            coin.destruct()
+            score += 1
+            text = font.render('Coins: ' + str(score), True, COIN_YELLOW_COLOR)
+            textRect = text.get_rect()
+            textRect.center = (50, 40)
+
     for entity in all_sprites:
         screen.blit(entity.surf, entity.rect)
 
-    if pygame.sprite.spritecollideany(player, coins):
-        coins = coins + 1
+    screen.blit(text, textRect)
 
     particles.update()
-    coins.update()
     player.update(pressed_keys)
 
     pygame.display.flip()
