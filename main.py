@@ -1,3 +1,4 @@
+from time import sleep
 import pygame
 import random
 from pygame.locals import (
@@ -23,7 +24,9 @@ class Player(pygame.sprite.Sprite):
         self.surf = pygame.image.load(
             "./assets/player_dragon_sprite.png").convert()
         self.surf.set_colorkey((0, 0, 0), RLEACCEL)
-        self.rect = self.surf.get_rect()
+        self.rect = self.surf.get_rect(
+            center=(SCREEN_WIDTH/2, SCREEN_HEIGHT/2)
+        )
 
     def update(self, pressed_keys):
         if pressed_keys[K_UP]:
@@ -99,6 +102,8 @@ class Enemy(pygame.sprite.Sprite):
                 random.randint(0, SCREEN_HEIGHT),
             )
         )
+        self.rect.height = 10
+        self.rect.width = 10
         self.speed = random.randint(5, 10)
         self.move_direction = 0
 
@@ -137,11 +142,21 @@ pygame.time.set_timer(ADDENEMY, 750)
 
 player = Player()
 
-font = pygame.font.Font('freesansbold.ttf', 16)
+score_font = pygame.font.Font('freesansbold.ttf', 16)
+game_over_font = pygame.font.Font('freesansbold.ttf', 32)
+
 score = 0
-text = font.render('Coins: ' + str(score), True, COIN_YELLOW_COLOR)
+text = score_font.render('Coins: ' + str(score), True, COIN_YELLOW_COLOR)
 textRect = text.get_rect()
 textRect.center = (50, 40)
+
+game_over_text_string_local = ""
+game_over_text_string_final = "GAME OVER"
+
+game_over_text = game_over_font.render(
+    game_over_text_string_local, True, COIN_YELLOW_COLOR)
+gameOverTextRect = game_over_text.get_rect()
+gameOverTextRect.center = (-100, 0)
 
 particles = pygame.sprite.Group()
 coins = pygame.sprite.Group()
@@ -183,19 +198,30 @@ while running:
             coin.destruct()
             coin_pickup_sound.play()
             score += 1
-            text = font.render('Coins: ' + str(score), True, COIN_YELLOW_COLOR)
+            text = score_font.render(
+                'Coins: ' + str(score), True, COIN_YELLOW_COLOR)
             textRect = text.get_rect()
             textRect.center = (50, 40)
 
     if pygame.sprite.spritecollideany(player, enemies):
         player_crush_sound.play()
         player.kill()
-        pygame.time.set_timer(QUIT, 1500)
+        for i in range(len(game_over_text_string_final)):
+            sleep(0.1)
+            game_over_text_string_local += game_over_text_string_final[i]
+            game_over_text = game_over_font.render(
+                game_over_text_string_local, True, COIN_YELLOW_COLOR)
+            gameOverTextRect.center = ((SCREEN_WIDTH/2) - 100, SCREEN_HEIGHT/2)
+            screen.blit(game_over_text, gameOverTextRect)
+            pygame.display.update(gameOverTextRect)
+
+        running = False
 
     for entity in all_sprites:
         screen.blit(entity.surf, entity.rect)
 
     screen.blit(text, textRect)
+    screen.blit(game_over_text, gameOverTextRect)
 
     particles.update()
     enemies.update()
